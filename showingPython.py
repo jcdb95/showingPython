@@ -1,4 +1,4 @@
-# Librerias
+# Libraries
 import facebook
 import requests
 import json
@@ -12,7 +12,7 @@ from metrics import Metrics
 from sqlalchemy import create_engine
 
 
-# Constantes para armar la URL
+# Constant to set the URL
 engine = create_engine(
     "postgresql://user:pass@host/database")
 token = 'xxxxxxxxxx'
@@ -21,24 +21,24 @@ page_info = graph.get_object('me')
 page_id = page_info['id']
 base = 'https://graph.facebook.com/v3.2'
 
-# Instancia de la clase metrics
+# Intance of a class that contains the metrics to retrieve
 metrics_class = Metrics()
 metricas = metrics_class.returnMetricas()
 
 
 def daterange(start_date, end_date):
-    """Recibe las fechas en las que quiero saber los insights \n
-        y me devuelve un generador en si    
+	"""Receive the dates when I want to know the insights \n
+    	and it returns a generator itself  
     """
     for n in range(int((end_date - start_date).days)):
         yield start_date + timedelta(n)
 
 
 def setDate():
-    """Setea los dias en los que voy a hacer el request a la API de FBi\n
-        Returns:
-            since: Fecha de inicio
-            until: Fecha de final
+    """Set the days in which I will make the request to the Facebook API \n
+         Returns:
+             since: Start date
+             until: End date
     """
     hoy = datetime.datetime.now()
     date_str = hoy.strftime("%m/%d/%Y")
@@ -50,16 +50,16 @@ def setDate():
 
 
 def getInsights(insights):
-    """Recibe todas las metricas y genera un string \n 
-        para que lo pueda usar el request a la API"""
+    """Receive all the metrics and generate a string \n
+        so it can be used by the request to the API"""
     metricas = ', '.join(insights)
     metricas = metricas.replace(' ', '')
     return metricas
 
 
 def ordenoMetricas(metrica):
-    """Chequeo si la metrica es un diccionario que contiene \n
-     otras metricas y lo parseo, lo devuelve ordenado"""
+    """Check if the metric is a dictionary containing \n
+      other metrics and I parse it, it returns ordered"""
     dict_metricas = {}
     for metric in metrica:
         nombre_metrica = metric['name']
@@ -86,8 +86,8 @@ def conectAnalytics(fecha, url, tipo):
 
 
 def parsingTime(fecha_publicado):
-    """Parseo la fecha de publicado para
-        que me devuelva la que voy a usar en getPageviews()
+    """Parse the published date for \n
+	 	that returns the one that I am going to use in getPageviews ()
     """
     list1 = fecha_publicado.split('T')
     fecha = list1[0]
@@ -115,7 +115,7 @@ def parsingTime(fecha_publicado):
 
 
 def parsingURL(link_del_post):
-    """Parsea la URL despues del .com\n
+    """Parse the URL after the .com \n
         Returns:
             URL: "/Seccion/nota.html"
     """
@@ -153,7 +153,7 @@ def parsingURL(link_del_post):
 
 
 def checkCopy(post):
-    """Chequea que el nombre y el copy tengan algo
+    """Check that the name and copy have something
     """
     if 'message' in post:
         copy_to_return = post['message']
@@ -171,9 +171,9 @@ def checkCopy(post):
 
 
 def getPost(since, until, metricas):
-    """Es el ecnargado de hacer el request a la API de FB\n
-        Returns: 
-        DataFrame: DF de la fecha que se le paso
+    """He is in charge of making the request to the Facebook API \n
+		Returns: 
+			DataFrame: DF of the date that was passed to him
     """
     print(since, type(since))
     print(until, type(until))
@@ -247,10 +247,18 @@ def getDFofDate():
     return df_master
 
 
+# Generates the DataFrame
 master = getDFofDate()
+
+# Get calculated Metrics
 calculated = metrics_class.returnCalculatedMetrics(master)
+
+# Gives rounded numbers fon the metrics
 result = calculated.round(4)
 result.fillna(0, inplace=True)
+# Sort everytihing by date and hour
 result.sort_values(['fecha', 'hora'], inplace=True)
 print(result)
+
+# Now it goes everything to PostgreSQL Database so then Data Studio can retrieve it
 result.to_sql('fb_insights', engine, schema='public', if_exists='append')
